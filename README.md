@@ -6,7 +6,9 @@ Click here to view the Swagger documentation:
 
 ----
 
+Maia Labs develops the intelligent endoscopic module ColoMaia, leveraging AI to enhance polyp detection, automate medical reports, and optimize video storage. The system is compatible with any endoscopic tower and integrates with hospital systems, improving diagnostic accuracy and saving doctors' time.
 Maia is capable of communicating with third-party systems via REST/FHIR and seamlessly integrates with PACS platforms.
+
 
 # Third party integration
 
