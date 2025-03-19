@@ -9,10 +9,22 @@ Maia is capable of communicating with third-party systems via REST/FHIR and seam
 
 ----
 
-## API Documentation
+### API Documentation
 
 Click here to view the Swagger documentation:
 [Swagger UI](https://editor.swagger.io/?url=https://raw.githubusercontent.com/maia-labs-dev/mbox-api/main/api/maia-lab-swagger-new.json)
+
+### API Models
+
+Click here to view the API models: [Models](docs/README-MODELS.md)
+
+### MAIA configuration
+
+Click here to view the API configuration: [Configuration of maia](docs/README-CONFIGURATION.md)
+
+### MAIA & IRIS integration
+
+Click here to view the API configuration: [Maia & Iris integration](docs/ColoMAIA_IRIS.pptx)
 
 ----
 
