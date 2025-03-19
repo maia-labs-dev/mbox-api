@@ -20,7 +20,7 @@ Click here to view the API models: [Models](docs/README-MODELS.md)
 
 ### MAIA configuration
 
-Click here to view the API configuration: [Configuration of maia](docs/README-CONFIGURATION.md)
+Click here to view the API configuration: [Configuration](docs/README-CONFIGURATION.md)
 
 ### MAIA & IRIS integration
 
