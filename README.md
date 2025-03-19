@@ -1,8 +1,8 @@
-## API Documentation  
+# API Documentation  
 Click here to view the Swagger documentation:
 [Swagger UI](https://editor.swagger.io/?url=https://raw.githubusercontent.com/maia-labs-dev/mbox-api/main/api/maia-lab-swagger-new.json)
 
-# API Models
+## Models
 
 ```
 # Enumerations
