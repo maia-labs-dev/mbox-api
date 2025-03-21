@@ -3,7 +3,7 @@
 Maia Labs develops the intelligent endoscopic module ColoMaia, leveraging AI to enhance polyp detection, automate
 medical reports, and optimize video storage. The system is compatible with any endoscopic tower and integrates with
 hospital systems, improving diagnostic accuracy and saving doctors' time. To see more about Maia Labs, visit our
-website [maialabs.com](https://maia-labs.com).
+website [maia-labs.com](https://maia-labs.com).
 
 Maia is capable of communicating with third-party systems via REST/FHIR and seamlessly integrates with PACS platforms.
 
