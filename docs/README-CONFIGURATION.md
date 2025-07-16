@@ -18,6 +18,17 @@
       },
       "location": "LocationX"
     },
+    "mwl": {
+        "host": "127.0.0.1",
+        "port": 4242,
+        "ae_title": "MAIA",
+        "called_ae_title" : "WORKLIST_SERVER",
+        "worklist_filter" : {
+            "date": null,
+            "modality": null,
+            "station_aet": null
+        }
+    },
     "pacs": {
       "enabled": true,
       "communication_protocol": "dcmsend",
@@ -51,7 +62,8 @@
         }
       }
     },
-    "rest_fhir_switch": "rest",
+    "report_server_type": "rest",
+    "worklist_server_type" : "mwl",
   }
 }
 ```
