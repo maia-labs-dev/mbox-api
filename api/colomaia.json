@@ -28,69 +28,11 @@
         }
     ],
     "paths": {
-        "/worklist-patients-today": {
-            "get": {
-                "operationId": "WorklistPatientsToday",
-                "description": "External API: get patient worklist from EHR-S/PAM for today",
-                "x-ISC_ServiceMethod": "Worklist",
-                "produces": [
-                    "application/json"
-                ],
-                "parameters": [
-                    {
-                        "name": "location",
-                        "in": "query",
-                        "required": false,
-                        "type": "string",
-                        "description": "Location where device is located, for which patient worklist shall be retrieved from EMR/PAM system."
-                    }
-                ],
-                "responses": {
-                    "default": {
-                        "description": "(Unexpected Error)"
-                    },
-                    "200": {
-                        "description": "(Expected Result)",
-                        "schema": {
-                            "$ref": "#/definitions/WorklistResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/patient/{patientId}": {
-            "get": {
-                "operationId": "PatientById",
-                "description": "Patient information retrieved by its ID in system",
-                "produces": [
-                    "application/json"
-                ],
-                "parameters": [
-                    {
-                        "name": "patientId",
-                        "in": "path",
-                        "type": "string",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "default": {
-                        "description": "(Unexpected Error)"
-                    },
-                    "200": {
-                        "description": "(Expected Result)",
-                        "schema": {
-                            "$ref": "#/definitions/Patient"
-                        }
-                    }
-                }
-            }
-        },
-        "/report": {
+        "/worklist": {
             "post": {
-                "operationId": "DiagnosticReport",
-                "description": "External API: send textual form of diagnostic report to EHR-S",
-                "x-ISC_ServiceMethod": "DiagnosticReport",
+                "operationId": "PushWorklist",
+                "description": "External API: Integrator pushes patient worklist to ColoMAIA",
+                "x-ISC_ServiceMethod": "PushWorklist",
                 "consumes": [
                     "application/json"
                 ],
@@ -99,12 +41,12 @@
                 ],
                 "parameters": [
                     {
-                        "name": "report",
+                        "name": "worklist",
                         "in": "body",
-                        "description": "Request body contents",
+                        "description": "Worklist data to be pushed",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/Report"
+                            "$ref": "#/definitions/WorklistPushRequest"
                         }
                     }
                 ],
@@ -113,33 +55,348 @@
                         "description": "(Unexpected Error)"
                     },
                     "200": {
-                        "description": "(Expected Result)"
+                        "description": "(Expected Result)",
+                        "schema": {
+                            "$ref": "#/definitions/WorklistPushResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/report": {
+            "get": {
+                "operationId": "GetReport",
+                "description": "External API: Integrator retrieves diagnostic report from ColoMAIA by accession number. Reports are available for 24 hours after webhook notification.",
+                "x-ISC_ServiceMethod": "GetReport",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "accessionNumber",
+                        "in": "query",
+                        "type": "string",
+                        "required": true,
+                        "description": "Accession number from Hospital Information System"
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": "(Unexpected Error)"
+                    },
+                    "200": {
+                        "description": "(Expected Result)",
+                        "schema": {
+                            "$ref": "#/definitions/Report"
+                        }
+                    },
+                    "404": {
+                        "description": "Report not found"
+                    },
+                    "410": {
+                        "description": "Report expired (after 24 hours) - GDPR compliance"
+                    }
+                }
+            }
+        },
+        "/webhook/report-ready": {
+            "post": {
+                "operationId": "WebhookReportReady",
+                "description": "⚠️ INTEGRATOR IMPLEMENTS THIS ENDPOINT ⚠️\n\nThis is NOT a ColoMAIA endpoint. YOU must implement this webhook endpoint on your server.\n\nColoMAIA will call this endpoint on your server when a report is ready:\n- Register your webhook URL with Maia Labs during setup\n- Accept POST requests with ReportReadyNotification payload\n- Return HTTP 200 within 10 seconds\n- Process report retrieval asynchronously\n- ColoMAIA retries failed calls: 3 attempts with exponential backoff",
+                "x-ISC_ServiceMethod": "WebhookReportReady",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "notification",
+                        "in": "body",
+                        "description": "Report ready notification payload sent by ColoMAIA",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ReportReadyNotification"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Webhook received successfully - your endpoint should return this immediately"
+                    },
+                    "500": {
+                        "description": "Internal server error - ColoMAIA will retry"
+                    }
+                }
+            }
+        },
+        "/report/{accessionNumber}/media": {
+            "get": {
+                "operationId": "GetReportMedia",
+                "description": "Download media attachments (images and videos) for a report. Media is available for 24 hours after webhook notification.",
+                "x-ISC_ServiceMethod": "GetReportMedia",
+                "produces": [
+                    "application/zip"
+                ],
+                "parameters": [
+                    {
+                        "name": "accessionNumber",
+                        "in": "path",
+                        "type": "string",
+                        "required": true,
+                        "description": "Accession number from Hospital Information System"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ZIP file containing all media files (JPEG images and MP4 videos)",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "404": {
+                        "description": "Report or media not found"
+                    },
+                    "410": {
+                        "description": "Media expired (after 24 hours) - GDPR compliance"
+                    }
+                }
+            }
+        },
+        "/webhook": {
+            "get": {
+                "operationId": "GetWebhookConfig",
+                "description": "Retrieve current webhook configuration",
+                "x-ISC_ServiceMethod": "GetWebhookConfig",
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Current webhook configuration",
+                        "schema": {
+                            "$ref": "#/definitions/WebhookConfig"
+                        }
+                    },
+                    "404": {
+                        "description": "No webhook configured"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "RegisterWebhook",
+                "description": "Register or update webhook endpoint URL",
+                "x-ISC_ServiceMethod": "RegisterWebhook",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "webhook",
+                        "in": "body",
+                        "description": "Webhook configuration",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/WebhookRegistration"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Webhook registered successfully",
+                        "schema": {
+                            "$ref": "#/definitions/WebhookConfig"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid webhook URL"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "UnregisterWebhook",
+                "description": "Unregister webhook endpoint",
+                "x-ISC_ServiceMethod": "UnregisterWebhook",
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Webhook unregistered successfully"
+                    },
+                    "404": {
+                        "description": "No webhook configured"
                     }
                 }
             }
         }
     },
     "definitions": {
-        "WorklistResponse": {
+        "WorklistPushRequest": {
             "type": "object",
-            "required": ["uuid", "status", "patients"],
+            "required": [
+                "location",
+                "patients"
+            ],
             "properties": {
-                "uuid": {
+                "location": {
                     "type": "string",
-                    "format": "uuid",
-                    "description": "Unique identifier of the worklist response."
+                    "description": "Location where device is located."
                 },
+                "patients": {
+                    "type": "array",
+                    "description": "List of patients in the worklist.",
+                    "items": {
+                        "$ref": "#/definitions/WorklistPatient"
+                    }
+                }
+            }
+        },
+        "WorklistPatient": {
+            "type": "object",
+            "required": [
+                "patient_id",
+                "accession_number"
+            ],
+            "properties": {
+                "patient_id": {
+                    "type": "string",
+                    "description": "Patient identifier."
+                },
+                "accession_number": {
+                    "type": "string",
+                    "description": "Accession number from Hospital Information System."
+                },
+                "given_name": {
+                    "type": "string",
+                    "description": "Patient's first name."
+                },
+                "surname": {
+                    "type": "string",
+                    "description": "Patient's last name."
+                },
+                "birth_date": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Patient's date of birth (ISO format)."
+                },
+                "examination_schedule": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Scheduled examination time (ISO format)."
+                },
+                "modality": {
+                    "type": "string",
+                    "enum": [
+                        "colonoscopy",
+                        "gastroscopy"
+                    ],
+                    "description": "Type of examination modality."
+                }
+            }
+        },
+        "WorklistPushResponse": {
+            "type": "object",
+            "required": [
+                "status",
+                "message"
+            ],
+            "properties": {
                 "status": {
                     "type": "integer",
                     "description": "Status code of the response (e.g., 200 for success)."
                 },
-                "patients": {
-                    "type": "array",
-                    "description": "List of patient identifiers in the worklist.",
-                    "items": {
-                        "type": "string",
-                        "example": "6665554442"
-                    }
+                "message": {
+                    "type": "string",
+                    "description": "Response message."
+                },
+                "received_count": {
+                    "type": "integer",
+                    "description": "Number of patients received in the worklist."
+                }
+            }
+        },
+        "ReportReadyNotification": {
+            "type": "object",
+            "required": [
+                "accession_number",
+                "status"
+            ],
+            "properties": {
+                "accession_number": {
+                    "type": "string",
+                    "description": "Accession number from Hospital Information System - use this to retrieve the report via GET /report?accessionNumber={accessionNumber}"
+                },
+                "patient_id": {
+                    "type": "string",
+                    "description": "Patient identifier (optional)."
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "final",
+                        "preliminary"
+                    ],
+                    "description": "Status of the report."
+                },
+                "timestamp": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Time when report became ready (ISO format)."
+                }
+            }
+        },
+        "WebhookRegistration": {
+            "type": "object",
+            "required": [
+                "url"
+            ],
+            "properties": {
+                "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "HTTPS URL of your webhook endpoint (must be publicly accessible)"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Optional description of this webhook integration"
+                }
+            }
+        },
+        "WebhookConfig": {
+            "type": "object",
+            "properties": {
+                "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Currently registered webhook URL"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "active",
+                        "inactive",
+                        "failed"
+                    ],
+                    "description": "Status of webhook: active (working), inactive (not tested yet), failed (last delivery failed)"
+                },
+                "last_tested": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp of last webhook test"
+                },
+                "last_delivery": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp of last successful webhook delivery"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Optional description of this webhook integration"
                 }
             }
         },
@@ -352,7 +609,15 @@
         },
         "Statistics": {
             "type": "object",
-            "required": ["duration", "extraction_time", "BBPS", "visibility", "ileum_reached", "cecum_reached", "tools_used"],
+            "required": [
+                "duration",
+                "extraction_time",
+                "BBPS",
+                "visibility",
+                "ileum_reached",
+                "cecum_reached",
+                "tools_used"
+            ],
             "properties": {
                 "duration": {
                     "$ref": "#/definitions/FloatValueTypePair",
@@ -389,7 +654,10 @@
         },
         "Finding": {
             "type": "object",
-            "required": ["position", "snapshot_ids"],
+            "required": [
+                "position",
+                "snapshot_ids"
+            ],
             "properties": {
                 "id": {
                     "type": "string",
@@ -430,7 +698,10 @@
         },
         "Note": {
             "type": "object",
-            "required": ["position", "snapshot_ids"],
+            "required": [
+                "position",
+                "snapshot_ids"
+            ],
             "properties": {
                 "id": {
                     "type": "string",
@@ -550,12 +821,20 @@
         },
         "TypeEnum": {
             "type": "string",
-            "enum": ["string", "float", "int", "bool"],
+            "enum": [
+                "string",
+                "float",
+                "int",
+                "bool"
+            ],
             "description": "Enumeration of possible data types."
         },
         "SourceType": {
             "type": "string",
-            "enum": ["manual", "automatic"],
+            "enum": [
+                "manual",
+                "automatic"
+            ],
             "description": "Enumeration of possible data sources."
         }
     }
